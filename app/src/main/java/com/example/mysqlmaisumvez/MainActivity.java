@@ -6,8 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -17,41 +15,34 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
-    EditText etddescricao, etdpreceoCompra, etdPrecoVenda, etdqtdEstoque, etdcodigo;
+    EditText etddescricao, etdpreceoCompra, etdPrecoVenda, etdqtdEstoque, etdcodigoFornec,etdcodigo;
     Button btnbusca, btninserir, btneditar, btnapagar;
-    Spinner cboFornecedor;
     RequestQueue requestQueue;
+    Spinner cboFornecedor;
     private static final String URL1 = "http://192.168.1.9/distribuidora/InserirProduto.php";
-    List<String> nomesFornecedoresList;
-    Fornecedores fornecedores;
+    private Request<? extends Object> JsonArrayRequest;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         requestQueue = Volley.newRequestQueue(this);
-        cboFornecedor = findViewById(R.id.cboFornecedor);
 
         initUI();
-        obterFornecedoresDoWebService();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, nomesFornecedoresList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        cboFornecedor.setAdapter(adapter);
 
         btninserir.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,100 +56,67 @@ public class MainActivity extends AppCompatActivity {
                 buscarProduto("http://192.168.1.9/distribuidora/buscarProdutos.php?id="+etdcodigo.getText()+"");
             }
         });
-        cboFornecedor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-               fornecedores =(Fornecedores) parent.getItemAtPosition(position);
 
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-               fornecedores= null;
-            }
-        });
+
+        // Configurar outros botões aqui...
     }
-
-    private void obterFornecedoresDoWebService() {
-        String URL = "http://192.168.1.9/distribuidora/listarFornecedores.php";
-
-
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, URL, null, new Response.Listener<JSONArray>() {
+    private void buscarProduto(String URL2) {
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(URL2, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
-                try {
+                JSONObject jsonObject = null;
+                for (int i = 0; i < response.length(); i++) {
+                    try {
+                        jsonObject = response.getJSONObject(i);
+                        etddescricao.setText(jsonObject.getString("descricao"));
+                        etdpreceoCompra.setText(jsonObject.getString("preco_de_compra"));
+                        etdPrecoVenda.setText(jsonObject.getString("preco_de_venda"));
+                        etdqtdEstoque.setText(jsonObject.getString("qtd_estoque"));
+                        etdcodigoFornec.setText(jsonObject.getString("for_id"));
 
-                    nomesFornecedoresList = new ArrayList<String>();
-
-                    for (int i = 0; i < response.length(); i++) {
-                        JSONObject fornecedor = response.getJSONObject(i);
-                        String nomeFornecedor = fornecedor.getString("nome");
-                        nomesFornecedoresList.add(nomeFornecedor);
+                    } catch (JSONException e) {
+                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                // Lidar com erros na solicitação
-                Toast.makeText(MainActivity.this, "Erro na solicitação: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "ERRO NA CONEXÃO", Toast.LENGTH_SHORT).show();
             }
         });
 
-
-        requestQueue.add(jsonArrayRequest);
+        requestQueue.add(jsonArrayRequest); // Adicione a solicitação à fila.
     }
 
-    private void buscarProduto(String URL2) {
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL2, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    etddescricao.setText(jsonObject.getString("descricao"));
-                    etdpreceoCompra.setText(jsonObject.getString("preco_de_compra"));
-                    etdPrecoVenda.setText(jsonObject.getString("preco_de_venda"));
-                    etdqtdEstoque.setText(jsonObject.getString("qtd_estoque"));
-                    String valorFornecedor = jsonObject.getString("for_id");
-                    int posicao = nomesFornecedoresList.indexOf(valorFornecedor);
-                    if (posicao >= 0) {
-                        cboFornecedor.setSelection(posicao);
-                    }
-                } catch (JSONException e) {
-                    Toast.makeText(getApplicationContext(), "Erro na resposta JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getApplicationContext(), "ERRO NA CONEXÃO: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
 
-        requestQueue.add(stringRequest);
-    }
 
     private void initUI() {
+        etdcodigo = findViewById(R.id.codigo);
         etddescricao = findViewById(R.id.descricao);
         etdpreceoCompra = findViewById(R.id.precoCompra);
         etdPrecoVenda = findViewById(R.id.precoVenda);
         etdqtdEstoque = findViewById(R.id.qtdEstoque);
+        cboFornecedor = findViewById(R.id.cboFornecedor);
+
+
         btnbusca = findViewById(R.id.buscar);
         btnapagar = findViewById(R.id.apagar);
         btneditar = findViewById(R.id.editar);
         btninserir = findViewById(R.id.inserir);
-        cboFornecedor = findViewById(R.id.cboFornecedor);
     }
+
 
     private void cadastrarProduto() {
         String descricao = etddescricao.getText().toString().trim();
         String precoCompraStr = etdpreceoCompra.getText().toString().trim();
         String precoVendaStr = etdPrecoVenda.getText().toString().trim();
         String qtdEstoqueStr = etdqtdEstoque.getText().toString().trim();
-        String codigoFornecStr = String.valueOf(cboFornecedor.getSelectedItem());
+        String codigoFornecStr = etdcodigoFornec.getText().toString().trim();
 
+        // Validação de entrada (adicione sua validação aqui)
 
         try {
             float precoCompra = Float.parseFloat(precoCompraStr);
@@ -166,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             int qtdEstoque = Integer.parseInt(qtdEstoqueStr);
             int codigoFornec = Integer.parseInt(codigoFornecStr);
 
-
+            // Agora você pode usar os valores
             enviarCadastroParaServidor(descricao, precoCompra, precoVenda, qtdEstoque, codigoFornec);
         } catch (NumberFormatException e) {
             Toast.makeText(MainActivity.this, "Valores inválidos", Toast.LENGTH_SHORT).show();
@@ -174,7 +132,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void enviarCadastroParaServidor(String descricao, float precoCompra, float precoVenda, int qtdEstoque, int cboFornecedor) {
+
+    private void enviarCadastroParaServidor(String descricao, float precoCompra, float precoVenda, int qtdEstoque, int codigoFornec) {
         StringRequest stringRequest = new StringRequest(
                 Request.Method.POST,
                 URL1,
@@ -188,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        // Aqui você lida com os erros da solicitação, por exemplo, exibir uma mensagem de erro
                         Log.e("Volley Error", "Erro ao enviar a solicitação: " + error.toString());
                         Toast.makeText(MainActivity.this, "Erro ao cadastrar: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -202,10 +161,13 @@ public class MainActivity extends AppCompatActivity {
                 params.put("preco_de_compra", String.valueOf(precoCompra));
                 params.put("preco_de_venda", String.valueOf(precoVenda));
                 params.put("qtd_estoque", String.valueOf(qtdEstoque));
-                params.put("for_id", String.valueOf(cboFornecedor));
+                params.put("for_id", String.valueOf(codigoFornec));
                 return params;
             }
         };
+        requestQueue= Volley.newRequestQueue(this);
+        requestQueue.add(JsonArrayRequest);
         requestQueue.add(stringRequest);
     }
+
 }
