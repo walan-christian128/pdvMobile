@@ -132,15 +132,14 @@
         app:rippleColor="#00BCD4" />
 
     <Spinner
-        android:id="@+id/cboFornecedor"
-        android:layout_width="210dp"
-        android:layout_height="44dp"
-        android:visibility="visible"
+        android:id="@+id/spinnerforcedor"
+        android:layout_width="206dp"
+        android:layout_height="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.248"
+        app:layout_constraintHorizontal_bias="0.253"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.561"
-        tools:visibility="visible" />
+        app:layout_constraintVertical_bias="0.58" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
