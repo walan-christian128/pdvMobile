@@ -18,6 +18,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -39,9 +40,10 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue requestQueue;
     private static final String URL1 = "http://192.168.1.9/distribuidora/InserirProduto.php";
     private static final String URL2 = "http://192.168.1.9/distribuidora/buscarProdutos.php?id=";
-
+    private static final String URL3 = "http://192.168.1.9/distribuidora/listarFornecedores.php";
     Spinner cboFornecedor;
-    List<Fornecedores> fornecedoresList = new ArrayList<>();
+    ArrayList<String> fornecedoresList = new ArrayList<>();
+    ArrayAdapter<String> forned;
 
 
 
@@ -53,7 +55,34 @@ public class MainActivity extends AppCompatActivity {
         requestQueue = Volley.newRequestQueue(this);
 
         initUI();
+        cboFornecedor = findViewById(R.id.spinnerforcedor);
+        requestQueue = Volley.newRequestQueue(this);
 
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL3, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    JSONArray jsonArray = response.getJSONArray("fornecedores");
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        String fornecedorNome = jsonObject.optString("nome");
+                        fornecedoresList.add(fornecedorNome);
+                    }
+                    forned = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, fornecedoresList);
+                    forned.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    cboFornecedor.setAdapter(forned);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }
+        );
+        requestQueue.add(jsonObjectRequest);
         btninserir.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -67,72 +96,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Configurar o Spinner de fornecedores
 
 
-        // Preencher o Spinner com a lista de fornecedores
-        obterListaDeFornecedores();
-
-        // Configurar um Listener para o Spinner
-        cboFornecedor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                Fornecedores fornecedorSelecionado = fornecedoresList.get(position);
-                // Aqui você pode acessar o objeto Fornecedores selecionado
-                // Por exemplo, fornecedorSelecionado.getId() ou fornecedorSelecionado.getNome()
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                // Executado quando nada é selecionado no Spinner
-            }
-        });
     }
 
-    private void obterListaDeFornecedores() {
-        String URL_FORNECEDORES = "http://192.168.1.9/distribuidora/listarFornecedores.php";
-
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, URL_FORNECEDORES, null, new Response.Listener<JSONArray>() {
-            @Override
-            public void onResponse(JSONArray response) {
-                fornecedoresList = parseFornecedores(response);
-                preencherSpinnerFornecedores();
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(MainActivity.this, "Erro ao obter a lista de fornecedores", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        requestQueue.add(jsonArrayRequest);
-    }
-
-    private List<Fornecedores> parseFornecedores(JSONArray jsonArray) {
-        List<Fornecedores> fornecedores = new ArrayList<>();
-        try {
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject jsonFornecedor = jsonArray.getJSONObject(i);
-                int id = jsonFornecedor.getInt("id");
-                String nome = jsonFornecedor.getString("nome");
-
-                fornecedores.add(new Fornecedores(id,nome));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return fornecedores;
-    }
-
-    private void preencherSpinnerFornecedores() {
-        List<String> nomesFornecedores = new ArrayList<>();
-        for (Fornecedores fornecedor : fornecedoresList) {
-            nomesFornecedores.add(fornecedor.getNome());
-        }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, nomesFornecedores);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        cboFornecedor.setAdapter(adapter);
-    }
 
 
     private void buscarProduto(String URL2) {
@@ -149,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Erro na resposta JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
-        }, new Response.ErrorListener() {5
+        }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Toast.makeText(getApplicationContext(), "ERRO NA CONEXÃO: " + error.getMessage(), Toast.LENGTH_SHORT).show();
