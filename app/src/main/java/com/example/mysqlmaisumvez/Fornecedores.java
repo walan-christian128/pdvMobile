@@ -1,9 +1,11 @@
 package com.example.mysqlmaisumvez;
 
-public class Fornecedores   {
+public class Fornecedores extends Clientes  {
     private int id;
 
     public Fornecedores(int id, String nome) {
+        this.id = id ;
+        this.nome = nome;
 
     }
 
@@ -33,6 +35,11 @@ public class Fornecedores   {
 
     private String nome;
     private String cnpj;
+
+    public String toString(){
+        return nome;
+
+    }
 
 
 

@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String URL2 = "http://192.168.1.9/distribuidora/buscarProdutos.php?id=";
     private static final String URL3 = "http://192.168.1.9/distribuidora/listarFornecedores.php";
     Spinner cboFornecedor;
-    ArrayList<String> fornecedoresList = new ArrayList<>();
-    ArrayAdapter<String> forned;
+    ArrayList<Fornecedores> fornecedoresList = new ArrayList<>();
+    ArrayAdapter<Fornecedores> forned;
 
 
 
@@ -65,10 +65,12 @@ public class MainActivity extends AppCompatActivity {
                     JSONArray jsonArray = response.getJSONArray("fornecedores");
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        int fornecedorId = jsonObject.optInt("id");
                         String fornecedorNome = jsonObject.optString("nome");
-                        fornecedoresList.add(fornecedorNome);
+                        Fornecedores fornecedores = new Fornecedores(fornecedorId,fornecedorNome);
+                        fornecedoresList.add(fornecedores);
                     }
-                    forned = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, fornecedoresList);
+                    forned = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item,fornecedoresList);
                     forned.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     cboFornecedor.setAdapter(forned);
                 } catch (JSONException e) {
