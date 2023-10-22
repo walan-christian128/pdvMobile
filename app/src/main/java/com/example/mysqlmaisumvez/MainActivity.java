@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
             Fornecedores fornecedorSelecionado = (Fornecedores) cboFornecedor.getSelectedItem();
             int codigoFornec = fornecedorSelecionado.getId();
             enviarCadastroParaServidor(descricao, precoCompra, precoVenda, qtdEstoque, codigoFornec);
+            clearText();
         } catch (NumberFormatException e) {
             Toast.makeText(MainActivity.this, "Valores inválidos", Toast.LENGTH_SHORT).show();
             Log.e("NumberFormatException", "Erro de conversão de tipo: " + e.getMessage());
@@ -198,5 +199,14 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         requestQueue.add(stringRequest);
+    }
+    private void clearText(){
+        etddescricao.setText("");
+        etdpreceoCompra.setText("");
+        etdPrecoVenda.setText("");
+        etdqtdEstoque.setText("");
+        cboFornecedor.setSelection(0);
+
+
     }
 }
